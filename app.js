@@ -39,16 +39,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 //   }
 // });
 
-app.use(function(req, res, next){
-  if(req.protocol == "http"){
-    res.redirect("https://"+req.hostname+req.originalUrl);
-    return;
-  }
-  // res.locals.siteName = req.siteName;
-  // res.locals.cates = req.cates;
-  res.locals.user = req.session.user;
-  next();
-});
+// app.use(function(req, res, next){
+//   if(req.protocol == "http"){
+//     res.redirect("https://"+req.hostname+req.originalUrl);
+//     return;
+//   }
+//   // res.locals.siteName = req.siteName;
+//   // res.locals.cates = req.cates;
+//   res.locals.user = req.session.user;
+//   next();
+// });
 app.use('/', indexRouter);
 
 // catch 404 and forward to error handler
