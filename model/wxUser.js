@@ -17,15 +17,13 @@ const wxUser = new mongoose.Schema({
   publishActivity: [
     {
       type: mongoose.SchemaTypes.ObjectId,
-      ref: 'activity',
-      unique: true
+      ref: 'activity'
     }
   ],
   attendActivity: [
     {
       type: mongoose.SchemaTypes.ObjectId,
-      ref: 'activity',
-      unique: true
+      ref: 'activity'
     }
   ],
   sex: {

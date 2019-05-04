@@ -24,7 +24,6 @@ const activity = new mongoose.Schema({
     {
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'comment',
-
     }
   ],
   votes: [
