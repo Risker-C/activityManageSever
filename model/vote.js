@@ -6,6 +6,22 @@ const vote = new mongoose.Schema({
     default: '',
     required: true
   },
+  content: {
+    type: String,
+    required: true,
+  },
+  options: {
+    type: Array,
+    required: true,
+  },
+  voteType: {
+    type: Number,
+    default: 1
+  },
+  endTime: {
+    type: String,
+    required: true
+  },
   activityID: {
     type: mongoose.SchemaTypes.ObjectId,
     ref: 'activity',
@@ -21,14 +37,10 @@ const vote = new mongoose.Schema({
     default: 0,
     required: true
   },
-  agreeNum: {
-    type: Number,
-    default: 0
+  optionVote: {
+    type: Object,
+    default: {}
   },
-  opposeNum: {
-    type: Number,
-    default: 0
-  }
 }, {versionKey: false, timestamps: {createdAt: 'create_time', updatedAt: 'update_time'}}) // 自动生成添加日期和修改日期
 
 module.exports = mongoose.model('vote', vote)

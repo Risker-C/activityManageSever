@@ -7,17 +7,28 @@ const comment = mongoose.Schema({
   },
   parentID: {
     type: mongoose.SchemaTypes.ObjectId,
-    ref: 'comment',
-    required: false
+    ref: 'comment'
   },
   commentTo: {
     type: mongoose.SchemaTypes.ObjectId,
     ref: 'wxUser',
     required: true
   },
+  commentToName: {
+    type: String,
+    required: true
+  },
   commentUser:{
     type: mongoose.SchemaTypes.ObjectId,
     ref: 'wxUser',
+    required: true
+  },
+  commentUserName: {
+    type: String,
+    required: true
+  },
+  commentUserAvatar: {
+    type: String,
     required: true
   },
   content: {

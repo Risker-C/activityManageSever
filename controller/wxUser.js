@@ -76,7 +76,9 @@ router.post('/login', async(req, res, next) => {
     }
     let userToken = jwt.sign({
       _id: user._id,
-      sessionId: sessionId
+      sessionId: sessionId,
+      avatar: user.avatar,
+      username: user.username
       }, cert,
       {
         algorithm: 'RS256',
