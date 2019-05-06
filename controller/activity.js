@@ -4,7 +4,9 @@ const mongoose = require('mongoose')
 const auth = require('../utils/auth')
 const wxLogin = require('../utils/JWTLogin')
 const activity = require('../model/activity')
+const wxUser = require('../model/wxUser')
 const returObject = require('../utils/utils')
+// 发布活动
 router.post('/publish', wxLogin, async(req, res, next) => {
   try {
     const {
@@ -15,7 +17,7 @@ router.post('/publish', wxLogin, async(req, res, next) => {
       votes=[],
       userInfo,
     } = req.body
-    console.log("body:",req.body)
+    // console.log("body:",req.body)
     var userId = userInfo._id
     attendUsers.push(userId)
     const data = await activity.create({
@@ -26,6 +28,8 @@ router.post('/publish', wxLogin, async(req, res, next) => {
       votes,
       publishUser: userId
     })
+    var result = await wxUser.updateOne({_id: userId},{$push:{publishActivity: data._id},$push:{attendActivity: data._id},$inc:{msgNumber: 1}})   
+    // console.log("添加到个人参加活动列表结果：",result)
     res.json({
       flag: 200,
       id: data._id
@@ -34,7 +38,7 @@ router.post('/publish', wxLogin, async(req, res, next) => {
     next(error)
   }
 })
-
+// 获取所有活动
 router.get('/all', async(req, res, next) => {
   try {
     let {pageNum=0, pageSize=10} = req.query
@@ -61,16 +65,16 @@ router.get('/all', async(req, res, next) => {
     next(error)
   }
 })
-
-router.get('/my', wxLogin, async(req, res, next) => {
+// 获取发布的活动
+router.get('/myPublish', wxLogin, async(req, res, next) => {
   try {
     let {pageNum=0, pageSize=10} = req.query
     let {userInfo} = req.body
-    console.log("query:", req.query, "body:", req.body)
+    // console.log("query:", req.query, "body:", req.body)
     pageNum = parseInt(pageNum)
     pageSize = parseInt(pageSize)
     var data = await activity
-        .find({publishUser: userInfo._id},{ openid:0,create_time:0,update_time:0})
+        .find({publishUser: userInfo._id},{ openid:0,create_time:0})
         .skip(pageNum * pageSize)
         .limit(pageSize)
         .populate({
@@ -87,7 +91,42 @@ router.get('/my', wxLogin, async(req, res, next) => {
     next(error)
   }
 })
-
+// 获取参与的活动
+router.get('/myAttend', wxLogin, async(req, res, next) => {
+  try {
+    let {pageNum=0, pageSize=10} = req.query
+    let {userInfo} = req.body
+    // console.log("query:", req.query, "body:", req.body)
+    pageNum = parseInt(pageNum)
+    pageSize = parseInt(pageSize)
+    var data = await wxUser
+        .findOne({_id: userInfo._id},{ openid:0,create_time:0,update_time:0})
+        .skip(pageNum * pageSize)
+        .limit(pageSize)
+        .populate({
+          path: 'attendActivity',
+          populate:{
+            path: 'publishUser',
+            select: 'avatar username'
+          }
+        })
+    const count = data.attendActivity.length
+    var newData = data.attendActivity, returnData = []
+    newData.forEach((item, index) => {
+      if(item.publishUser._id != userInfo._id){
+        returnData.push(newData[index])
+      }
+    })
+    res.json({
+        code: 200,
+        data: returnData,
+        pager: parseInt(count/pageSize)
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+// 活动单条活动详细信息
 router.get('/detail', wxLogin, async(req, res, next) => {
   try {
     const { userInfo } = req.body
@@ -171,6 +210,8 @@ router.get('/detail', wxLogin, async(req, res, next) => {
               "comments._id": 1,
               "comments.parentID": 1,
               "comments.commentUserAvatar": 1,
+              "schedule": 1,
+              "scheduleType": 1
           }
         },
         { $sort: { "create_time": 1 } }
@@ -185,21 +226,21 @@ router.get('/detail', wxLogin, async(req, res, next) => {
       if(haveUser){
         var returnData = detail[0]
         returnData.comments.forEach(item => {
-          console.log("循环comments item.parentID：==>",item.parentID,"returnData.activityID:===>",returnData._id)
+          // console.log("循环comments item.parentID：==>",item.parentID,"returnData.activityID:===>",returnData._id)
           if(item.parentID+"" == returnData._id+""){
-            console.log("此条评论为一级评论")
+            // console.log("此条评论为一级评论")
           } else {
-            console.log("此条评论为二级评论")
+            // console.log("此条评论为二级评论")
             returnData.reqlies.forEach(item2 => {
-              console.log("循环查询：item2._id:===>",item2._id,"item.parentID:===>",item.parentID)
+              // console.log("循环查询：item2._id:===>",item2._id,"item.parentID:===>",item.parentID)
               if(item2._id+"" == item.parentID+""){
-                console.log("是当前的评论的二级评论：item2:====>", item2)
+                // console.log("是当前的评论的二级评论：item2:====>", item2)
                 item2.comments.push(item)
               }
             })
           }
         });
-        console.log("*************************************\n",returnData.reqlies,"\n***************************\n",detail[0].reqlies)
+        // console.log("*************************************\n",returnData.reqlies,"\n***************************\n",detail[0].reqlies)
         var isEdit = null
         if(userInfo._id == returnData.publishUser._id){
           isEdit = 1
@@ -227,16 +268,73 @@ router.get('/detail', wxLogin, async(req, res, next) => {
     next(error)
   }
 })
-
+// 参加某一条活动
 router.get('/attend', wxLogin, async(req, res, next) => {
   try {
     let {activityID} = req.query
     let {userInfo} = req.body
     var data = await activity.updateOne({_id: activityID},{$push:{attendUsers: userInfo._id}})
+    var result = await wxUser.updateOne({_id: userInfo._id},{$push:{attendActivity: activityID},$inc:{msgNumber: 1}})
+    console.log("添加到个人参加活动列表结果：",result)
     res.json({
       flag: 200,
       data,
       msg: '加入成功'
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+// 退出活动
+router.get('/leave', wxLogin, async(req, res, next) => {
+  try {
+    let {activityID} = req.query
+    let {userInfo} = req.body
+    var data = await activity.updateOne({_id: activityID},{$pull:{attendUsers: userInfo._id}})
+    var result = await wxUser.updateOne({_id: userInfo._id},{$pull:{attendActivity: activityID},$inc:{msgNumber: 1}})
+    res.json({
+      flag: 200,
+      data,
+      msg: '退出成功'
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+// 活动开始
+router.post('/begin', wxLogin, async(req, res, next) => {
+  try {
+    let {
+      userInfo,
+      activityID,
+      schedule
+    } = req.body
+    schedule = schedule.split(',')
+    console.log(activityID,schedule)
+    var data = await activity.updateOne({_id: activityID},{$set:{schedule: schedule,scheduleType: 0}})
+    res.json({
+      flag: 200,
+      data,
+      msg: '进度保存成功'
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// 活动开始
+router.post('/scheduleUpdate', wxLogin, async(req, res, next) => {
+  try {
+    let {
+      userInfo,
+      activityID,
+      scheduleType
+    } = req.body
+    var data = await activity.updateOne({_id: activityID},{$set:{scheduleType: scheduleType}})
+    res.json({
+      flag: 200,
+      data,
+      msg: '进度保存成功'
     })
   } catch (error) {
     next(error)

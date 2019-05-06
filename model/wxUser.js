@@ -58,6 +58,10 @@ const wxUser = new mongoose.Schema({
     type: String,
     default: ""
   },
+  msgNumber: {
+    type: Number,
+    default: 0
+  }
 }, {versionKey: false, timestamps: {createdAt: 'create_time', updatedAt: 'update_time'}}) // 自动生成添加日期和修改日期
 
 module.exports = mongoose.model('wxUser', wxUser)

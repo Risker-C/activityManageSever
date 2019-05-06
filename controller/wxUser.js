@@ -23,6 +23,7 @@ var userArray = [
   'publishActivity',
   'attendActivity'
 ]
+// 用code，向微信后台换取用户openid
 var getSessionKey = function(code){
   return new Promise((resolve, reject) => {
     https.get('https://api.weixin.qq.com/sns/jscode2session?appid='+wx.appId+'&secret='+wx.appSecret+'&js_code='+code+'&grant_type=authorization_code',function(res){
@@ -36,9 +37,10 @@ var getSessionKey = function(code){
     });
   })
 }
+// 返回新对象
 var returObject = function( object, array=userArray){
   var newObject = {}
-  console.log("array",array)
+  // console.log("array",array)
   array.forEach((item,index) => {
     switch (item) {
       case 'publishActivity':
@@ -54,6 +56,7 @@ var returObject = function( object, array=userArray){
   });
   return newObject
 }
+// 用户登录
 router.post('/login', async(req, res, next) => {
   try {
     const data = await getSessionKey(req.body.code)
@@ -63,7 +66,7 @@ router.post('/login', async(req, res, next) => {
     let cert = fs.readFileSync(path.resolve(__dirname,'../config/jwt.pem'))
     var user = await wxUser.findOne({openid: data.openid},{ openid:0,create_time:0,update_time:0})
     if(user){
-      console.log("用户信息：",user)
+      // console.log("用户信息：",user)
     }else{
       var newUser = await wxUser.create({
         openid: data.openid,
@@ -71,7 +74,7 @@ router.post('/login', async(req, res, next) => {
         avatar: datas.avatarUrl,
         sex: 0,
       })
-      console.log("创建用户：",newUser)
+      // console.log("创建用户：",newUser)
       user = newUser
     }
     let userToken = jwt.sign({
@@ -84,7 +87,7 @@ router.post('/login', async(req, res, next) => {
         algorithm: 'RS256',
         expiresIn: '1h'
       });
-    console.log("生成的token:",userToken)
+    // console.log("生成的token:",userToken)
     var returnData = returObject(user,["avatar","username","_id"])
     res.json({
       code: 200,
@@ -92,14 +95,10 @@ router.post('/login', async(req, res, next) => {
       token: userToken
     });
   } catch (error) {
-    console.log("错误：",error)
-    res.json({
-      code: 500,
-      error: error
-    });
+    next(error)
   }
 })
-
+// 修改用户信息
 router.post('/edit', wxLogin, async(req, res, next) => {
   try {
     const {
@@ -115,7 +114,7 @@ router.post('/edit', wxLogin, async(req, res, next) => {
       address,
       userInfo
     } = req.body
-    console.log("body:",req.body, "session:","token:",userInfo)
+    // console.log("body:",req.body, "session:","token:",userInfo)
     const data = await wxUser.updateOne({_id: userInfo._id},{$set:{
       username,
       avatar,
@@ -141,11 +140,11 @@ router.post('/edit', wxLogin, async(req, res, next) => {
     })
   }
 })
-
+// 用户信息获取
 router.get('/editDetail', wxLogin, async(req, res, next) => {
   try {
     const { userInfo } = req.body
-    console.log("body:",req.body, "session:",req.session,"cookie:",req.cookies,"token:",userInfo)
+    // console.log("body:",req.body, "session:",req.session,"cookie:",req.cookies,"token:",userInfo)
     const data = await wxUser.findOne({_id: userInfo._id})
     res.json({
       code: 200,

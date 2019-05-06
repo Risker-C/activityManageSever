@@ -31,7 +31,15 @@ const activity = new mongoose.Schema({
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'vote',
     }
-  ]
+  ],
+  scheduleType: {
+    type: Number,
+    default: 0
+  },
+  schedule: {
+    type: Array,
+    default: []
+  }
 },{versionKey: false, timestamps: {createdAt: 'create_time',updatedAt: 'update_time'}})
 
 module.exports = mongoose.model('activity', activity)

@@ -1,6 +1,6 @@
 module.exports = function( object, array=[]){
   var newObject = {}
-  console.log("array",array)
+  // console.log("array",array)
   if(array.length == 0){
     array = Object.keys(object)
   }

@@ -4,7 +4,7 @@ const auth = require('../utils/auth')
 const comment = require('../model/comment')
 const activity = require('../model/activity')
 const wxLogin = require('../utils/JWTLogin')
-
+// 发布一条评论信息
 router.post('/publish',wxLogin, async(req, res, next) => {
   try {
     const {
@@ -15,7 +15,7 @@ router.post('/publish',wxLogin, async(req, res, next) => {
       content,
       userInfo
     } = req.body
-    console.log(req.body)
+    // console.log(req.body)
     const data = await comment.create({
       activityID,
       parentID,
@@ -29,7 +29,7 @@ router.post('/publish',wxLogin, async(req, res, next) => {
     if(activityID == parentID){
       var act = await activity.updateOne({_id: activityID},{$push: {reqlies: data._id}})
     }
-    console.log("act:", act)
+    // console.log("act:", act)
     res.json({
       code: 200,
       msg: '评论成功',

@@ -16,7 +16,7 @@ const vote = new mongoose.Schema({
   },
   voteType: {
     type: Number,
-    default: 1
+    default: 0
   },
   endTime: {
     type: String,
@@ -38,9 +38,13 @@ const vote = new mongoose.Schema({
     required: true
   },
   optionVote: {
-    type: Object,
-    default: {}
+    type: Array,
+    default: []
   },
+  userVoted: {
+    type: Array,
+    default: []
+  }
 }, {versionKey: false, timestamps: {createdAt: 'create_time', updatedAt: 'update_time'}}) // 自动生成添加日期和修改日期
 
 module.exports = mongoose.model('vote', vote)
